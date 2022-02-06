@@ -10,18 +10,24 @@ interface IMovie {
 }
 
 export interface IGetMoviesResult {
-  dates: {
-    maximum: string;
-    minimum: string;
-  };
   page: number;
   results: [IMovie];
-  total_pages: number;
-  total_results: number;
 }
 
-export const getMovies = () => {
+export const getNowPlyaingMovies = () => {
   return fetch(`${BASE_PATH}/movie/now_playing?api_key=${API_KEY}`).then(
+    (response) => response.json(),
+  );
+};
+
+export const getTopRatedMovies = () => {
+  return fetch(`${BASE_PATH}/movie/top_rated?api_key=${API_KEY}`).then(
+    (response) => response.json(),
+  );
+};
+
+export const getUpcomingMovies = () => {
+  return fetch(`${BASE_PATH}/movie/upcoming?api_key=${API_KEY}`).then(
     (response) => response.json(),
   );
 };

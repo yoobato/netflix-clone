@@ -3,11 +3,16 @@ import { useState } from 'react';
 import { useQuery } from 'react-query';
 import { useMatch, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { getMovies, IGetMoviesResult } from '../api';
+import {
+  getNowPlyaingMovies,
+  getTopRatedMovies,
+  getUpcomingMovies,
+  IGetMoviesResult,
+} from '../api';
 import { makeImagePath } from '../utils';
 
 const Wrapper = styled.div`
-  backgroundcolor: black;
+  background-color: black;
   padding-bottom: 200px;
 `;
 
@@ -40,10 +45,26 @@ const Overview = styled.p`
   width: 50%;
 `;
 
-// TODO: position이 relative인꺼 안에 absolute가 있으면 어떤 효과지?
+const Sliders = styled.div`
+  display: flex;
+  flex-direction: column;
+  /* top: -100px; */
+`;
+
 const Slider = styled.div`
   position: relative;
+  margin-top: 232px;
   top: -100px;
+
+  &:first-child {
+    margin-top: 0;
+  }
+
+  h1 {
+    font-size: 32px;
+    margin-left: 60px;
+    margin-bottom: 16px;
+  }
 `;
 
 const Row = styled(motion.div)`
@@ -177,20 +198,30 @@ const Home = () => {
 
   const { scrollY } = useViewportScroll();
 
-  const { data, isLoading } = useQuery<IGetMoviesResult>(
+  const { data: nowPlayingData, isLoading } = useQuery<IGetMoviesResult>(
     ['movies', 'nowPlaying'],
-    getMovies,
+    getNowPlyaingMovies,
+  );
+
+  const { data: topRatedData } = useQuery<IGetMoviesResult>(
+    ['movies', 'topRated'],
+    getTopRatedMovies,
+  );
+
+  const { data: upcomingData } = useQuery<IGetMoviesResult>(
+    ['movies', 'upcoming'],
+    getUpcomingMovies,
   );
 
   const [index, setIndex] = useState(0);
   const increaseIndex = () => {
-    if (data) {
+    if (nowPlayingData) {
       if (leaving) {
         return;
       }
       toggleLeaving();
 
-      const totalMovies = data.results.length - 1; // 배경으로 사용하는 영화 1개 제외
+      const totalMovies = nowPlayingData.results.length - 1; // 배경으로 사용하는 영화 1개 제외
       const maxIndex = Math.floor(totalMovies / offset) - 1; // 슬라이더에 항상 row가 가득차도록 floor 사용.
 
       setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
@@ -202,7 +233,7 @@ const Home = () => {
 
   const toggleLeaving = () => setLeaving((prev) => !prev);
 
-  const onBoxClicked = (movieId: number) => {
+  const onBoxClicked = (movieId: string) => {
     navigate(`/movies/${movieId}`);
   };
 
@@ -211,13 +242,28 @@ const Home = () => {
   };
 
   // bigMovieMath.params.movieId 값이 있으면 뒤의 값(movie)이 됨.
-  const clickedMovie =
-    bigMovieMatch?.params.movieId &&
-    data?.results.find(
-      (movie) => String(movie.id) === bigMovieMatch.params.movieId,
-    );
+  let clickedMovie;
+  if (bigMovieMatch?.params.movieId) {
+    let targetMovieId = '';
+    let targetData: IGetMoviesResult | undefined;
 
-  // TODO: 슬라이더 여러개 추가 (현재는 now playing만 보여줌)
+    if (bigMovieMatch.params.movieId.startsWith('nowplaying')) {
+      targetMovieId = bigMovieMatch.params.movieId.slice('nowplaying'.length);
+      targetData = nowPlayingData;
+    } else if (bigMovieMatch.params.movieId.startsWith('toprated')) {
+      targetMovieId = bigMovieMatch.params.movieId.slice('toprated'.length);
+      targetData = topRatedData;
+    } else if (bigMovieMatch.params.movieId.startsWith('upcoming')) {
+      targetMovieId = bigMovieMatch.params.movieId.slice('upcoming'.length);
+      targetData = upcomingData;
+    }
+
+    if (targetData) {
+      clickedMovie = targetData.results.find(
+        (movie) => String(movie.id) === targetMovieId,
+      );
+    }
+  }
 
   return (
     <Wrapper>
@@ -228,49 +274,115 @@ const Home = () => {
           {/* 뒤에 || '' 은 fallback임. data가 null 이면 그냥 empty string으로 사용 */}
           <Banner
             onClick={increaseIndex}
-            bgPhoto={makeImagePath(data?.results[0].backdrop_path || '')}
+            bgPhoto={makeImagePath(
+              nowPlayingData?.results[0].backdrop_path || '',
+            )}
           >
-            <Title>{data?.results[0].title}</Title>
-            <Overview>{data?.results[0].overview}</Overview>
+            <Title>{nowPlayingData?.results[0].title}</Title>
+            <Overview>{nowPlayingData?.results[0].overview}</Overview>
           </Banner>
-          <Slider>
-            {/* 초기에는 slider 애니메이션 안보여주기 위해 initial={false} 로 처리한다 */}
-            <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
-              {/* key가 바뀌면 React로 하여금 새로운 Row가 만들어진걸로 인식하게 함. */}
-              {/* key가 바뀌면 exit, initial, animate가 다 다시 실행됨 */}
-              <Row
-                variants={rowVariants}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                transition={{ type: 'tween', duration: 1 }}
-                key={index}
-              >
-                {/* 맨 처음 데이터는 배경에 사용하므로 제거한다 */}
-                {/* 데이터를 6개씩 잘라서 보여준다 */}
-                {data?.results
-                  .slice(1)
-                  .slice(offset * index, offset * index + offset)
-                  .map((movie) => (
-                    <Box
-                      layoutId={movie.id + ''} // movie.id가 number인데 이걸 string으로 바꿔준다.
-                      onClick={() => onBoxClicked(movie.id)}
-                      key={movie.id}
-                      variants={boxVariants}
-                      initial="normal"
-                      whileHover="hover"
-                      transition={{ type: 'tween' }}
-                      bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
-                    >
-                      {/* whileHover 안써줘도 된다. (부모로부터 이름이 상속됨) */}
-                      <Info variants={infoVariants}>
-                        <h4>{movie.title}</h4>
-                      </Info>
-                    </Box>
-                  ))}
-              </Row>
-            </AnimatePresence>
-          </Slider>
+          <Sliders>
+            <Slider>
+              <h1>Now Playing</h1>
+              {/* 초기에는 slider 애니메이션 안보여주기 위해 initial={false} 로 처리한다 */}
+              <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+                {/* key가 바뀌면 React로 하여금 새로운 Row가 만들어진걸로 인식하게 함. */}
+                {/* key가 바뀌면 exit, initial, animate가 다 다시 실행됨 */}
+                <Row
+                  variants={rowVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ type: 'tween', duration: 1 }}
+                  key={index}
+                >
+                  {nowPlayingData?.results
+                    .slice(1)
+                    .slice(offset * index, offset * index + offset)
+                    .map((movie) => (
+                      <Box
+                        layoutId={'nowplaying' + movie.id}
+                        onClick={() => onBoxClicked('nowplaying' + movie.id)}
+                        key={movie.id}
+                        variants={boxVariants}
+                        initial="normal"
+                        whileHover="hover"
+                        transition={{ type: 'tween' }}
+                        bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
+                      >
+                        <Info variants={infoVariants}>
+                          <h4>{movie.title}</h4>
+                        </Info>
+                      </Box>
+                    ))}
+                </Row>
+              </AnimatePresence>
+            </Slider>
+            <Slider>
+              <h1>Top Rated</h1>
+              <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+                <Row
+                  variants={rowVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ type: 'tween', duration: 1 }}
+                  key={index}
+                >
+                  {topRatedData?.results
+                    .slice(offset * index, offset * index + offset)
+                    .map((movie) => (
+                      <Box
+                        layoutId={'toprated' + movie.id}
+                        onClick={() => onBoxClicked('toprated' + movie.id)}
+                        key={movie.id}
+                        variants={boxVariants}
+                        initial="normal"
+                        whileHover="hover"
+                        transition={{ type: 'tween' }}
+                        bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
+                      >
+                        <Info variants={infoVariants}>
+                          <h4>{movie.title}</h4>
+                        </Info>
+                      </Box>
+                    ))}
+                </Row>
+              </AnimatePresence>
+            </Slider>
+            <Slider>
+              <h1>Upcoming</h1>
+              <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
+                <Row
+                  variants={rowVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  transition={{ type: 'tween', duration: 1 }}
+                  key={index}
+                >
+                  {upcomingData?.results
+                    .slice(offset * index, offset * index + offset)
+                    .map((movie) => (
+                      <Box
+                        layoutId={'upcoming' + movie.id}
+                        onClick={() => onBoxClicked('upcoming' + movie.id)}
+                        key={movie.id}
+                        variants={boxVariants}
+                        initial="normal"
+                        whileHover="hover"
+                        transition={{ type: 'tween' }}
+                        bgPhoto={makeImagePath(movie.backdrop_path, 'w500')}
+                      >
+                        <Info variants={infoVariants}>
+                          <h4>{movie.title}</h4>
+                        </Info>
+                      </Box>
+                    ))}
+                </Row>
+              </AnimatePresence>
+            </Slider>
+          </Sliders>
           <AnimatePresence>
             {bigMovieMatch ? (
               <>
