@@ -106,6 +106,22 @@ const Info = styled(motion.div)`
   }
 `;
 
+const NextButton = styled.button`
+  position: absolute;
+  top: 2px;
+  right: 60px;
+  width: 40px;
+  height: 40px;
+  font-size: 24px;
+  font-weight: 500;
+  text-align: center;
+  color: ${(props) => props.theme.white.lighter};
+  background-color: transparent;
+  border: 2px solid ${(props) => props.theme.white.lighter};
+  border-radius: 20px;
+  cursor: pointer;
+`;
+
 const Overlay = styled(motion.div)`
   position: fixed;
   top: 0;
@@ -213,8 +229,11 @@ const Home = () => {
     getUpcomingMovies,
   );
 
-  const [index, setIndex] = useState(0);
-  const increaseIndex = () => {
+  const [nowPlayingIndex, setNowPlayingIndex] = useState(0);
+  const [topRatedIndex, setTopRatedIndex] = useState(0);
+  const [upcomingIndex, setUpcomingIndex] = useState(0);
+
+  const increaseNowPlayingIndex = () => {
     if (nowPlayingData) {
       if (leaving) {
         return;
@@ -224,7 +243,33 @@ const Home = () => {
       const totalMovies = nowPlayingData.results.length - 1; // 배경으로 사용하는 영화 1개 제외
       const maxIndex = Math.floor(totalMovies / offset) - 1; // 슬라이더에 항상 row가 가득차도록 floor 사용.
 
-      setIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+      setNowPlayingIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+  };
+  const increaseTopRatedIndex = () => {
+    if (topRatedData) {
+      if (leaving) {
+        return;
+      }
+      toggleLeaving();
+
+      const totalMovies = topRatedData.results.length - 2;
+      const maxIndex = Math.floor(totalMovies / offset) - 2;
+
+      setTopRatedIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
+    }
+  };
+  const increaseUpcomingIndex = () => {
+    if (upcomingData) {
+      if (leaving) {
+        return;
+      }
+      toggleLeaving();
+
+      const totalMovies = upcomingData.results.length - 2;
+      const maxIndex = Math.floor(totalMovies / offset) - 2;
+
+      setUpcomingIndex((prev) => (prev === maxIndex ? 0 : prev + 1));
     }
   };
 
@@ -273,7 +318,6 @@ const Home = () => {
         <>
           {/* 뒤에 || '' 은 fallback임. data가 null 이면 그냥 empty string으로 사용 */}
           <Banner
-            onClick={increaseIndex}
             bgPhoto={makeImagePath(
               nowPlayingData?.results[0].backdrop_path || '',
             )}
@@ -294,11 +338,14 @@ const Home = () => {
                   animate="visible"
                   exit="exit"
                   transition={{ type: 'tween', duration: 1 }}
-                  key={index}
+                  key={nowPlayingIndex}
                 >
                   {nowPlayingData?.results
                     .slice(1)
-                    .slice(offset * index, offset * index + offset)
+                    .slice(
+                      offset * nowPlayingIndex,
+                      offset * nowPlayingIndex + offset,
+                    )
                     .map((movie) => (
                       <Box
                         layoutId={'nowplaying' + movie.id}
@@ -317,6 +364,7 @@ const Home = () => {
                     ))}
                 </Row>
               </AnimatePresence>
+              <NextButton onClick={increaseNowPlayingIndex}>&gt;</NextButton>
             </Slider>
             <Slider>
               <h1>Top Rated</h1>
@@ -327,10 +375,13 @@ const Home = () => {
                   animate="visible"
                   exit="exit"
                   transition={{ type: 'tween', duration: 1 }}
-                  key={index}
+                  key={topRatedIndex}
                 >
                   {topRatedData?.results
-                    .slice(offset * index, offset * index + offset)
+                    .slice(
+                      offset * topRatedIndex,
+                      offset * topRatedIndex + offset,
+                    )
                     .map((movie) => (
                       <Box
                         layoutId={'toprated' + movie.id}
@@ -349,6 +400,7 @@ const Home = () => {
                     ))}
                 </Row>
               </AnimatePresence>
+              <NextButton onClick={increaseTopRatedIndex}>&gt;</NextButton>
             </Slider>
             <Slider>
               <h1>Upcoming</h1>
@@ -359,10 +411,13 @@ const Home = () => {
                   animate="visible"
                   exit="exit"
                   transition={{ type: 'tween', duration: 1 }}
-                  key={index}
+                  key={upcomingIndex}
                 >
                   {upcomingData?.results
-                    .slice(offset * index, offset * index + offset)
+                    .slice(
+                      offset * upcomingIndex,
+                      offset * upcomingIndex + offset,
+                    )
                     .map((movie) => (
                       <Box
                         layoutId={'upcoming' + movie.id}
@@ -381,6 +436,7 @@ const Home = () => {
                     ))}
                 </Row>
               </AnimatePresence>
+              <NextButton onClick={increaseUpcomingIndex}>&gt;</NextButton>
             </Slider>
           </Sliders>
           <AnimatePresence>
