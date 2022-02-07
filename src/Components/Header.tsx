@@ -79,6 +79,7 @@ const Input = styled(motion.input)`
   right: 0px;
   padding: 5px 10px;
   padding-left: 40px;
+  width: 270px;
   z-index: -1;
   color: white;
   font-size: 16px;
@@ -184,7 +185,7 @@ const Header = () => {
         <Search onSubmit={handleSubmit(onValid)}>
           <motion.svg
             onClick={toggleSearch}
-            animate={{ x: searchOpen ? -185 : 0 }}
+            animate={{ x: searchOpen ? -235 : 0 }}
             transition={{ type: 'linear' }}
             fill="currentColor"
             viewBox="0 0 20 20"
