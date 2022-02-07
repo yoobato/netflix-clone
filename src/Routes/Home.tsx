@@ -158,11 +158,52 @@ const BigTitle = styled.h3`
   top: -80px;
 `;
 
+const BigScoreWrapper = styled.div`
+  padding-left: 20px;
+  padding-right: 20px;
+  position: relative;
+  top: -80px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const BigVote = styled.span<{ vote: number }>`
+  font-size: 20px;
+  width: 44px;
+  line-height: 44px;
+  border-radius: 22px;
+  font-weight: 600;
+  background-color: ${(props) =>
+    props.vote > 7 ? '#0ca678' : props.vote > 4 ? '#f59f00' : '#f03e3e'};
+  color: ${(props) => props.theme.black.lighter};
+  text-align: center;
+`;
+
+const BigVoteCount = styled.span``;
+
+const BigPopularity = styled.span`
+  span {
+    font-weight: 800;
+  }
+`;
+
 const BigOverview = styled.p`
   padding: 20px;
   color: ${(props) => props.theme.white.lighter};
   position: relative;
   top: -80px;
+`;
+
+const BigRelease = styled.p`
+  padding: 10px 20px;
+  color: ${(props) => props.theme.white.lighter};
+  position: relative;
+  top: -80px;
+
+  span {
+    font-weight: 600;
+  }
 `;
 
 const rowVariants = {
@@ -327,7 +368,7 @@ const Home = () => {
           </Banner>
           <Sliders>
             <Slider>
-              <h1>Now Playing</h1>
+              <h1>Now Playing (Latest)</h1>
               {/* 초기에는 slider 애니메이션 안보여주기 위해 initial={false} 로 처리한다 */}
               <AnimatePresence initial={false} onExitComplete={toggleLeaving}>
                 {/* key가 바뀌면 React로 하여금 새로운 Row가 만들어진걸로 인식하게 함. */}
@@ -463,8 +504,21 @@ const Home = () => {
                         }}
                       />
                       <BigTitle>{clickedMovie.title}</BigTitle>
+                      <BigScoreWrapper>
+                        <BigVote vote={clickedMovie.vote_average}>
+                          {clickedMovie.vote_average}
+                        </BigVote>
+                        <BigPopularity>
+                          Score <span>{clickedMovie.popularity}</span> pts
+                        </BigPopularity>
+                        <BigVoteCount>
+                          ({clickedMovie.vote_count} votes)
+                        </BigVoteCount>
+                      </BigScoreWrapper>
                       <BigOverview>{clickedMovie.overview}</BigOverview>
-                      {/* TODO: Movie modal 예쁘게 꾸미자 */}
+                      <BigRelease>
+                        Released at <span>{clickedMovie.release_date}</span>
+                      </BigRelease>
                     </>
                   )}
                 </BigMovie>
