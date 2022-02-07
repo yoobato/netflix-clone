@@ -9,8 +9,11 @@ const App = () => {
     <Router basename={process.env.PUBLIC_URL}>
       <Header />
       <Routes>
-        <Route path="/tv" element={<Tv />} />
         <Route path="/tvs/:tvId" element={<Tv />} />
+        <Route path="/tv" element={<Tv />} />
+
+        <Route path="/search/movies/:movieId" element={<Search />} />
+        <Route path="/search/tvs/:tvId" element={<Search />} />
         <Route path="/search" element={<Search />} />
 
         {/* TODO: react-router-dom v6에서는 path array가 안된다? */}

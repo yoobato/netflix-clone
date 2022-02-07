@@ -54,6 +54,12 @@ export const getUpcomingMovies = () => {
   );
 };
 
+export const searchMovies = (keyword: string) => {
+  return fetch(
+    `${BASE_PATH}/search/movie?api_key=${API_KEY}&query=${keyword}`,
+  ).then((response) => response.json());
+};
+
 // Latest
 export const getOnTheAirTvs = () => {
   return fetch(`${BASE_PATH}/tv/on_the_air?api_key=${API_KEY}`).then(
@@ -77,4 +83,10 @@ export const getTopRatedTvs = () => {
   return fetch(`${BASE_PATH}/tv/top_rated?api_key=${API_KEY}`).then(
     (response) => response.json(),
   );
+};
+
+export const searchTvs = (keyword: string) => {
+  return fetch(
+    `${BASE_PATH}/search/tv?api_key=${API_KEY}&query=${keyword}`,
+  ).then((response) => response.json());
 };
