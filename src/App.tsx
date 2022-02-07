@@ -10,10 +10,11 @@ const App = () => {
       <Header />
       <Routes>
         <Route path="/tv" element={<Tv />} />
+        <Route path="/tvs/:tvId" element={<Tv />} />
         <Route path="/search" element={<Search />} />
 
         {/* TODO: react-router-dom v6에서는 path array가 안된다? */}
-        <Route path="movies/:movieId" element={<Home />} />
+        <Route path="/movies/:movieId" element={<Home />} />
         <Route path="/" element={<Home />} />
       </Routes>
     </Router>
